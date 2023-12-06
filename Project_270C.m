@@ -1,34 +1,24 @@
+solinit = bvpinit(linspace(0,0.78,50), ...
+[0 0 0.5 0.5]);
+options = bvpset('Stats','on','RelTol',1e-1);
+global R;
+R = 0.1;
+sol = bvp4c(@BVP_ode, @BVP_bc, solinit, options);
+t = sol.x;
+y = sol.y;
+% Calculate u(t) from x1,x2,p1,p2
+ut = (y(3,:).*(y(1,:) + 1/4))/(2*0.1);
+n = length(t);
+% Calculate the cost
+J = 0.78*(y(1,:)*y(1,:)' + y(2,:)*y(2,:)' + ...
+ut*ut'*0.1)/n;
+%% 
 clear all
-% State equations
-syms x1 x2 p1 p2 u;
-Dx1 = x2;
-Dx2 = -x2 + u;
-% Cost function inside the integral
-syms g;
-g = 0.5*u^2;
-% Hamiltonian
-syms p1 p2 H;
-H = g + p1*Dx1 + p2*Dx2;
-% Costate equations
-Dp1 = -diff(H,x1);
-Dp2 = -diff(H,x2);
-% solve for control u
-du = diff(H,u);
-sol_u = solve(du,u);
-% Substitute u to state equations
-Dx2 = subs(Dx2,u,sol_u);
-% convert symbolic objects to strings for using 'dsolve'
-eq1 = strcat('Dx1=',char(Dx1));
-eq2 = strcat('Dx2=',char(Dx2));
-eq3 = strcat('Dp1=',char(Dp1));
-eq4 = strcat('Dp2=',char(Dp2));
-sol_h = dsolve(eq1,eq2,eq3,eq4);
-%%
 syms x y z psi theta phi alpha beta ...
     x_d y_d z_d psi_d theta_d phi_d alpha_d beta_d ...
     p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 ...
     p12 p13 p14 p15 p16 u1 u2 u3 u4 real;
-q = [x y z psi theta phi alpha beta]';
+q = [x y z psi theta phi alpha beta]'; 
 zeta = [x y z]';
 neta = [psi theta phi]';
 miu = [alpha beta]';
@@ -119,12 +109,11 @@ dydt(9:16) = -inv(M) * (C * q_d + G) + inv(M) * U;
 dydt = simplify(dydt');
 P = [p1 p2 p3 p4 p5 p6 p7 p8 ...
     p9 p10 p11 p12 p13 p14 p15 p16]';
-%%
 syms J real;
 Q = eye(8);
 J = 1/2 * q' * Q * q + 1/2 * q_d' * Q * q_d + 1/2 * U' * Q * U;
 syms H real;
-H = simplify(J + P' * dydt);
+H = (J + P' * dydt);
 du1 = diff(H,u1);
 sol_u1 = simplify(solve(du1,u1));
 du2 = diff(H,u2);
@@ -135,47 +124,46 @@ du4 = diff(H,u4);
 sol_u4 = simplify(solve(du4,u4));
 u_sol = [sol_u1,sol_u2,sol_u3,sol_u4]';
 %%
-dydt = subs(dydt,u,u_sol);
-Dp1 = -diff(H,x);
-Dp2 = -diff(H,y);
-Dp3 = -diff(H,z);
-Dp4 = -diff(H,psi);
-Dp5 = -diff(H,theta);
-Dp6 = -diff(H,phi);
-Dp7 = -diff(H,alpha);
-Dp8 = -diff(H,beta);
-Dp9 = -diff(H,x_d);
-Dp10 = -diff(H,y_d);
-Dp11 = -diff(H,z_d);
-Dp12 = -diff(H,psi_d);
-Dp13 = -diff(H,theta_d);
-Dp14 = -diff(H,phi_d);
-Dp15 = -diff(H,alpha_d);
-Dp16 = -diff(H,beta_d);
-Dp = [Dp1 Dp2 Dp3 Dp4 Dp5 Dp6 Dp7 ...
-    Dp8 Dp9 Dp10 Dp11 Dp12 Dp13 Dp14 Dp15 Dp16]';
-Dp = subs(Dp,u,u_sol);
-Dp = simplify(Dp);
-eq1 = strcat('dx = ',char(dydt(1)));
-eq2 = strcat('dy = ',char(dydt(2)));
-eq3 = strcat('dz = ',char(dydt(3)));
-eq4 = strcat('dpsi = ',char(dydt(4)));
-eq5 = strcat('dtheta = ',char(dydt(5)));
-eq6 = strcat('dphi = ',char(dydt(6)));
-eq7 = strcat('dalpha = ',char(dydt(7)));
-eq8 = strcat('dbeta = ',char(dydt(8)));
-eq9 = strcat('ddx = ',char(dydt(9)));
-eq10 = strcat('ddy = ',char(dydt(10)));
-eq11 = strcat('ddz = ',char(dydt(11)));
-eq12 = strcat('ddpsi = ',char(dydt(12)));
-eq13 = strcat('ddtheta = ',char(dydt(13)));
-eq14 = strcat('ddphi = ',char(dydt(14)));
-eq15 = strcat('ddalpha = ',char(dydt(15)));
-eq16 = strcat('ddbeta = ',char(dydt(16)));
-% eqn = [eq1 eq2 eq3 eq4 eq5 eq6 eq7 eq8 eq9 ...
-%     eq10 eq11 eq12 eq13 eq14 eq15 eq16]';
-sol_h = dsolve(eq1, eq2, eq3, eq4, eq5, eq6, eq7, eq8, eq9, ...
-     eq10, eq11, eq12, eq13, eq14, eq15, eq16);
+% Dp1 = -diff(H,x);
+% Dp2 = -diff(H,y);
+% Dp3 = -diff(H,z);
+% Dp4 = -diff(H,psi);
+% Dp5 = -diff(H,theta);
+% Dp6 = -diff(H,phi);
+% Dp7 = -diff(H,alpha);
+% Dp8 = -diff(H,beta);
+% Dp9 = -diff(H,x_d);
+% Dp10 = -diff(H,y_d);
+% Dp11 = -diff(H,z_d);
+% Dp12 = -diff(H,psi_d);
+% Dp13 = -diff(H,theta_d);
+% Dp14 = -diff(H,phi_d);
+% Dp15 = -diff(H,alpha_d);
+% Dp16 = -diff(H,beta_d);
+% Dp = [Dp1 Dp2 Dp3 Dp4 Dp5 Dp6 Dp7 ...
+%     Dp8 Dp9 Dp10 Dp11 Dp12 Dp13 Dp14 Dp15 Dp16]';
+% Dp = subs(Dp,u,u_sol);
+% eq1 = strcat('dx = ',char(dydt(1)));
+% eq2 = strcat('dy = ',char(dydt(2)));
+% eq3 = strcat('dz = ',char(dydt(3)));
+% eq4 = strcat('dpsi = ',char(    dydt(4)));
+% eq5 = strcat('dtheta = ',char(dydt(5)));
+% eq6 = strcat('dphi = ',char(dydt(6)));
+% eq7 = strcat('dalpha = ',char(dydt(7)));
+% eq8 = strcat('dbeta = ',char(dydt(8)));
+% eq9 = strcat('ddx = ',char(dydt(9)));
+% eq10 = strcat('ddy = ',char(dydt(10)));
+% eq11 = strcat('ddz = ',char(dydt(11)));
+% eq12 = strcat('ddpsi = ',char(dydt(12)));
+% eq13 = strcat('ddtheta = ',char(dydt(13)));
+% eq14 = strcat('ddphi = ',char(dydt(14)));
+% eq15 = strcat('ddalpha = ',char(dydt(15)));
+% eq16 = strcat('ddbeta = ',char(dydt(16)));
+% % eqn = [eq1 eq2 eq3 eq4 eq5 eq6 eq7 eq8 eq9 ...
+% %     eq10 eq11 eq12 eq13 eq14 eq15 eq16]';
+% % sol_h = dsolve(eq1, eq2, eq3, eq4, eq5, eq6, eq7, eq8, eq9, ...
+% %      eq10, eq11, eq12, eq13, eq14, eq15, eq16);
+% sol_h = dsolve(eq1,eq2,eq3,eq4,eq5,eq6,eq7,eq8,eq9);
 %%
 function dydt = pd(t,xx)
 dydt = zeros(16,1);
@@ -195,6 +183,8 @@ theta_d = xx(13);
 phi_d = xx(14);
 alpha_d = xx(15);
 beta_d = xx(16);
+p1 = xx(17);
+p2 = xx(18);
 q = [x y z psi theta phi  alpha beta]';
 zeta = [x y z]';
 neta = [psi theta phi]';
