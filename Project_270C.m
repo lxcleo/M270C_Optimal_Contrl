@@ -122,26 +122,28 @@ du3 = diff(H,u3);
 sol_u3 = simplify(solve(du3,u3));
 du4 = diff(H,u4);
 sol_u4 = simplify(solve(du4,u4));
+global u_sol;
 u_sol = [sol_u1,sol_u2,sol_u3,sol_u4]';
-%%
-% Dp1 = -diff(H,x);
-% Dp2 = -diff(H,y);
-% Dp3 = -diff(H,z);
-% Dp4 = -diff(H,psi);
-% Dp5 = -diff(H,theta);
-% Dp6 = -diff(H,phi);
-% Dp7 = -diff(H,alpha);
-% Dp8 = -diff(H,beta);
-% Dp9 = -diff(H,x_d);
-% Dp10 = -diff(H,y_d);
-% Dp11 = -diff(H,z_d);
-% Dp12 = -diff(H,psi_d);
-% Dp13 = -diff(H,theta_d);
-% Dp14 = -diff(H,phi_d);
-% Dp15 = -diff(H,alpha_d);
-% Dp16 = -diff(H,beta_d);
-% Dp = [Dp1 Dp2 Dp3 Dp4 Dp5 Dp6 Dp7 ...
-%     Dp8 Dp9 Dp10 Dp11 Dp12 Dp13 Dp14 Dp15 Dp16]';
+
+Dp1 = -diff(H,x);
+Dp2 = -diff(H,y);
+Dp3 = -diff(H,z);
+Dp4 = -diff(H,psi);
+Dp5 = -diff(H,theta);
+Dp6 = -diff(H,phi);
+Dp7 = -diff(H,alpha);
+Dp8 = -diff(H,beta);
+Dp9 = -diff(H,x_d);
+Dp10 = -diff(H,y_d);
+Dp11 = -diff(H,z_d);
+Dp12 = -diff(H,psi_d);
+Dp13 = -diff(H,theta_d);
+Dp14 = -diff(H,phi_d);
+Dp15 = -diff(H,alpha_d);
+Dp16 = -diff(H,beta_d);
+global Dp;
+Dp = [Dp1 Dp2 Dp3 Dp4 Dp5 Dp6 Dp7 ...
+    Dp8 Dp9 Dp10 Dp11 Dp12 Dp13 Dp14 Dp15 Dp16]';
 % Dp = subs(Dp,u,u_sol);
 % eq1 = strcat('dx = ',char(dydt(1)));
 % eq2 = strcat('dy = ',char(dydt(2)));
@@ -164,9 +166,10 @@ u_sol = [sol_u1,sol_u2,sol_u3,sol_u4]';
 % % sol_h = dsolve(eq1, eq2, eq3, eq4, eq5, eq6, eq7, eq8, eq9, ...
 % %      eq10, eq11, eq12, eq13, eq14, eq15, eq16);
 % sol_h = dsolve(eq1,eq2,eq3,eq4,eq5,eq6,eq7,eq8,eq9);
-%%
+%% 
+
 function dydt = pd(t,xx)
-dydt = zeros(16,1);
+dydt = zeros(32,1);
 x = xx(1);
 y = xx(2);
 z = xx(3);
@@ -185,6 +188,20 @@ alpha_d = xx(15);
 beta_d = xx(16);
 p1 = xx(17);
 p2 = xx(18);
+p3 = xx(19);
+p4 = xx(20);
+p5 = xx(21);
+p6 = xx(22);
+p7 = xx(23);
+p8 = xx(24);
+p9 = xx(25);
+p10 = xx(26);
+p11 = xx(27);
+p12 = xx(28);
+p13 = xx(29);
+p14 = xx(30);
+p15 = xx(31);
+p16 = xx(32);
 q = [x y z psi theta phi  alpha beta]';
 zeta = [x y z]';
 neta = [psi theta phi]';
@@ -268,6 +285,9 @@ b = [b11 0 0 0;...
     0 0 0 1;
     0 0 0 0;...
     0 0 0 0];
+global u_sol;
+u_ = eval(u_sol);
+U = b * u_;
 dydt(1) = xx(9);
 dydt(2) = xx(10);
 dydt(3) = xx(11);
@@ -276,5 +296,28 @@ dydt(5) = xx(13);
 dydt(6) = xx(14);
 dydt(7) = xx(15);
 dydt(8) = xx(16);
-dydt(9:16) = -inv(M) * (C * xx(9:16) + G);
+dydt(9:16) = -inv(M) * (C * q_d + G) + inv(M) * U;
+global Dp;
+dydt(17:end) = eval(Dp);
+end
+% function dydt = BVP_ode(t,y)
+% global R;
+% t1 = y(1)+.25;
+% t2 = y(2)+.5;
+% t3 = exp(25*y(1)/(y(2)+2));
+% t4 = 50/(y(1)+2)^2;
+% u = y(3)*t1/(2*R);
+% dydt = [-2*t1+t2*t3-t2*u
+% 0.5-y(2)-t2*t3
+% -2*y(1)+2*y(3)-y(3)*t2*t4*t3+y(3)*u+y(4)*t2*t4*t3
+% -2*y(2)-y(3)*t3+y(4)*(1+t3)];
+% end
+% -----------------------------------------------
+% The boundary conditions:
+% x1(0) = 0.05, x2(0) = 0, tf = 0.78, p1(tf) = 0, p2(tf) = 0;
+function res = BVP_bc(ya,yb)
+res = [ ya(1) - 0.05
+ya(2) - 0
+yb(3) - 0
+yb(4) - 0 ];
 end
