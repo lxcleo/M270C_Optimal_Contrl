@@ -123,7 +123,6 @@ sol_u3 = simplify(solve(du3,u3));
 du4 = diff(H,u4);
 sol_u4 = simplify(solve(du4,u4));
 u_sol = [sol_u1,sol_u2,sol_u3,sol_u4]';
-
 Dp1 = -diff(H,x);
 Dp2 = -diff(H,y);
 Dp3 = -diff(H,z);
@@ -142,37 +141,33 @@ Dp15 = -diff(H,alpha_d);
 Dp16 = -diff(H,beta_d);
 Dp = [Dp1 Dp2 Dp3 Dp4 Dp5 Dp6 Dp7 ...
     Dp8 Dp9 Dp10 Dp11 Dp12 Dp13 Dp14 Dp15 Dp16]';
-% Dp = subs(Dp,u,u_sol);
-% eq1 = strcat('dx = ',char(dydt(1)));
-% eq2 = strcat('dy = ',char(dydt(2)));
-% eq3 = strcat('dz = ',char(dydt(3)));
-% eq4 = strcat('dpsi = ',char(    dydt(4)));
-% eq5 = strcat('dtheta = ',char(dydt(5)));
-% eq6 = strcat('dphi = ',char(dydt(6)));
-% eq7 = strcat('dalpha = ',char(dydt(7)));
-% eq8 = strcat('dbeta = ',char(dydt(8)));
-% eq9 = strcat('ddx = ',char(dydt(9)));
-% eq10 = strcat('ddy = ',char(dydt(10)));
-% eq11 = strcat('ddz = ',char(dydt(11)));
-% eq12 = strcat('ddpsi = ',char(dydt(12)));
-% eq13 = strcat('ddtheta = ',char(dydt(13)));
-% eq14 = strcat('ddphi = ',char(dydt(14)));
-% eq15 = strcat('ddalpha = ',char(dydt(15)));
-% eq16 = strcat('ddbeta = ',char(dydt(16)));
-% % eqn = [eq1 eq2 eq3 eq4 eq5 eq6 eq7 eq8 eq9 ...
-% %     eq10 eq11 eq12 eq13 eq14 eq15 eq16]';
-% % sol_h = dsolve(eq1, eq2, eq3, eq4, eq5, eq6, eq7, eq8, eq9, ...
-% %      eq10, eq11, eq12, eq13, eq14, eq15, eq16);
-% sol_h = dsolve(eq1,eq2,eq3,eq4,eq5,eq6,eq7,eq8,eq9);
+dHdu1 = diff(H,u1);
+dHdu2 = diff(H,u2);
+dHdu3 = diff(H,u3);
+dHdu4 = diff(H,u4);
 %% 
+u_sol = [1 0 0 0]'; % Initial Guess for control input 
 t0 = 0;
 tf = 20;
-init_guess = [1.5 -2 2 0 0 0 0 0 zeros(1,8), ones(1,16)];
-solinit = bvpinit(linspace(t0,tf,100),zeros(1,32));
-options = bvpset('Stats','on','RelTol',1e-1)
-sol = bvp4c(@(t,y) pd(t,y,u_sol,Dp), @BVP_bc,solinit);
-function dydt = pd(t,xx,u_sol,Dp)
-dydt = zeros(32,1);
+init_guess = [1.5 -2 2 0 0 0 0 0 zeros(1,8)];
+sol = ode45(@(t,y) stateEqn(t,y,u_sol), [t0,tf], init_guess);
+%%
+plot(sol.y(1,:))
+%%
+%Optimization Loop
+max_iter = 15;
+t0 = 0;
+tf = 10;
+solinit = bvpinit(linspace(t0,tf,100),zeros(1,16));
+sol = bvp4c(@(t, y) stateEqn(t, y, u_sol), @BVP_bc, solinit);
+epsilon = 1e-2;
+for iter = 1:max_iter
+    solinit = bvpinit(linspace(t0,tf,100),zeros(1,32));
+    sol = bvp4c(@(t, y) stateEqn(t, y, u_sol), @BVP_bc, solinit);
+end
+
+function dydt = stateEqn(t,xx,u_sol)
+dydt = zeros(16,1);
 x = xx(1);
 y = xx(2);
 z = xx(3);
@@ -189,22 +184,6 @@ theta_d = xx(13);
 phi_d = xx(14);
 alpha_d = xx(15);
 beta_d = xx(16);
-p1 = xx(17);
-p2 = xx(18);
-p3 = xx(19);
-p4 = xx(20);
-p5 = xx(21);
-p6 = xx(22);
-p7 = xx(23);
-p8 = xx(24);
-p9 = xx(25);
-p10 = xx(26);
-p11 = xx(27);
-p12 = xx(28);
-p13 = xx(29);
-p14 = xx(30);
-p15 = xx(31);
-p16 = xx(32);
 q = [x y z psi theta phi  alpha beta]';
 zeta = [x y z]';
 neta = [psi theta phi]';
@@ -238,8 +217,8 @@ m44 = I_psi * sin(theta)^2 + cos(theta)^2 * (I_theta * sin(theta)^2 ...
 m45 = (I_theta - I_phi)* (cos(theta) * sin(phi) * cos(phi));
 m54 = m45;
 m55 = I_theta * cos(phi)^2 + I_phi * sin(phi)^2;
-m77 = ml * l^2;
-m88 = ml * l^2 * sin(alpha)^2;
+m77 = ml * l^2 + ml * l^2;
+m88 = ml * l^2 * sin(alpha)^2 + ml * l^2;
 M = [m11 0 0 0 0 0 m17 m18; ...
     0 m22 0 0 0 0 m27 m28; ...
     0 0 m33 0 0 0 m37 0; ...
@@ -289,16 +268,8 @@ b = [b11 0 0 0;...
     0 0 0 1;
     0 0 0 0;...
     0 0 0 0];
-u1 = eval(u_sol(1));
-u1 = saturate(u1,-3,12);
-u2 = eval(u_sol(2));
-u2 = saturate(u2,-6,6);
-u3 = eval(u_sol(3));
-u3 = saturate(u3,-6,6);
-u4 = eval(u_sol(4));
-u4 = saturate(u4,-6,6);
-u_ = [u1 u2 u3 u4]';
-U = b * u_;
+
+U = b * u_sol;
 dydt(1) = xx(9);
 dydt(2) = xx(10);
 dydt(3) = xx(11);
@@ -308,20 +279,63 @@ dydt(6) = xx(14);
 dydt(7) = xx(15);
 dydt(8) = xx(16);
 dydt(9:16) = -inv(M) * (C * q_d + G) + inv(M) * U;
-dydt(17:end) = eval(Dp);
+
 end
-function saturatedValue = saturate(u, lowerLimit, upperLimit)
+function dp = costateEqn(t,P,u_sol,Dp,xx)
+dp = zeros(16,1);
+x = xx(1);
+y = xx(2);
+z = xx(3);
+psi = xx(4);
+theta = xx(5);
+phi = xx(6);
+alpha = xx(7);
+beta = xx(8);
+x_d = xx(9);
+y_d = xx(10);
+z_d = xx(11);
+psi_d = xx(12);
+theta_d = xx(13);
+phi_d = xx(14);
+alpha_d = xx(15);
+beta_d = xx(16);
+u1 = u_sol(1);
+u2 = u_sol(2);
+u3 = u_sol(3);
+u4 = u_sol(4);
+p1 = P(1);
+p2 = P(2);
+p3 = P(3);
+p4 = P(4);
+p5 = P(5);
+p6 = P(6);
+p7 = P(7);
+p8 = P(8);
+p9 = P(9);
+p10 = P(10);
+p11 = P(11);
+p12 = P(12);
+p13 = P(13);
+p14 = P(14);
+p15 = P(15);
+p16 = P(16);
+dp = eval(Dp);
+end
+function [saturatedValue, saturated] = saturate(u, lowerLimit, upperLimit)
     % Saturation function to constrain the variable 'u' between 'lowerLimit' and 'upperLimit'
     
     % Check if 'u' is below the lower limit
     if u < lowerLimit
         saturatedValue = lowerLimit;
+        saturated = true;
     % Check if 'u' is above the upper limit
     elseif u > upperLimit
         saturatedValue = upperLimit;
+        saturated = true;
     % If 'u' is within the limits, no saturation needed
     else
         saturatedValue = u;
+        saturated = false;
     end
 end
 
@@ -336,28 +350,13 @@ ya(5) - 0
 ya(6) - 0
 ya(7) - 0
 ya(8) - 0
-ya(9) - 0
-ya(10) - 0
-ya(11) - 0
-ya(12) - 0
-ya(13) - 0
-ya(14) - 0
-ya(15) - 0
-ya(16) - 0
+
 yb(1) + 1
 yb(2) - 2
 yb(3) - 2.5
-yb(16) - 0
-yb(17) - 0
-yb(18) - 0
-yb(19) - 0
-yb(20) - 0
-yb(21) - 0
-yb(22) - 0
-yb(23) - 0
-yb(24) - 0
-yb(25) - 0
-yb(26) - 0
-yb(27) - 0
-yb(28) - 0];
+yb(4) - 0
+yb(5) - 0
+yb(6) - 0
+yb(7) - 0
+yb(8) - 0];
 end
