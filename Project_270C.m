@@ -122,7 +122,6 @@ du3 = diff(H,u3);
 sol_u3 = simplify(solve(du3,u3));
 du4 = diff(H,u4);
 sol_u4 = simplify(solve(du4,u4));
-global u_sol;
 u_sol = [sol_u1,sol_u2,sol_u3,sol_u4]';
 
 Dp1 = -diff(H,x);
@@ -141,7 +140,6 @@ Dp13 = -diff(H,theta_d);
 Dp14 = -diff(H,phi_d);
 Dp15 = -diff(H,alpha_d);
 Dp16 = -diff(H,beta_d);
-global Dp;
 Dp = [Dp1 Dp2 Dp3 Dp4 Dp5 Dp6 Dp7 ...
     Dp8 Dp9 Dp10 Dp11 Dp12 Dp13 Dp14 Dp15 Dp16]';
 % Dp = subs(Dp,u,u_sol);
@@ -167,8 +165,13 @@ Dp = [Dp1 Dp2 Dp3 Dp4 Dp5 Dp6 Dp7 ...
 % %      eq10, eq11, eq12, eq13, eq14, eq15, eq16);
 % sol_h = dsolve(eq1,eq2,eq3,eq4,eq5,eq6,eq7,eq8,eq9);
 %% 
-
-function dydt = pd(t,xx)
+t0 = 0;
+tf = 20;
+init_guess = [1.5 -2 2 0 0 0 0 0 zeros(1,8), ones(1,16)];
+solinit = bvpinit(linspace(t0,tf,100),zeros(1,32));
+options = bvpset('Stats','on','RelTol',1e-1)
+sol = bvp4c(@(t,y) pd(t,y,u_sol,Dp), @BVP_bc,solinit);
+function dydt = pd(t,xx,u_sol,Dp)
 dydt = zeros(32,1);
 x = xx(1);
 y = xx(2);
@@ -234,6 +237,7 @@ m44 = I_psi * sin(theta)^2 + cos(theta)^2 * (I_theta * sin(theta)^2 ...
     + I_phi * cos(phi)^2);
 m45 = (I_theta - I_phi)* (cos(theta) * sin(phi) * cos(phi));
 m54 = m45;
+m55 = I_theta * cos(phi)^2 + I_phi * sin(phi)^2;
 m77 = ml * l^2;
 m88 = ml * l^2 * sin(alpha)^2;
 M = [m11 0 0 0 0 0 m17 m18; ...
@@ -285,7 +289,6 @@ b = [b11 0 0 0;...
     0 0 0 1;
     0 0 0 0;...
     0 0 0 0];
-global u_sol;
 u1 = eval(u_sol(1));
 u1 = saturate(u1,-3,12);
 u2 = eval(u_sol(2));
@@ -294,6 +297,7 @@ u3 = eval(u_sol(3));
 u3 = saturate(u3,-6,6);
 u4 = eval(u_sol(4));
 u4 = saturate(u4,-6,6);
+u_ = [u1 u2 u3 u4]';
 U = b * u_;
 dydt(1) = xx(9);
 dydt(2) = xx(10);
@@ -304,7 +308,6 @@ dydt(6) = xx(14);
 dydt(7) = xx(15);
 dydt(8) = xx(16);
 dydt(9:16) = -inv(M) * (C * q_d + G) + inv(M) * U;
-global Dp;
 dydt(17:end) = eval(Dp);
 end
 function saturatedValue = saturate(u, lowerLimit, upperLimit)
@@ -321,21 +324,7 @@ function saturatedValue = saturate(u, lowerLimit, upperLimit)
         saturatedValue = u;
     end
 end
-% function dydt = BVP_ode(t,y)
-% global R;
-% t1 = y(1)+.25;
-% t2 = y(2)+.5;
-% t3 = exp(25*y(1)/(y(2)+2));
-% t4 = 50/(y(1)+2)^2;
-% u = y(3)*t1/(2*R);
-% dydt = [-2*t1+t2*t3-t2*u
-% 0.5-y(2)-t2*t3
-% -2*y(1)+2*y(3)-y(3)*t2*t4*t3+y(3)*u+y(4)*t2*t4*t3
-% -2*y(2)-y(3)*t3+y(4)*(1+t3)];
-% end
-% -----------------------------------------------
-% The boundary conditions:
-% x1(0) = 0.05, x2(0) = 0, tf = 0.78, p1(tf) = 0, p2(tf) = 0;
+
 function res = BVP_bc(ya,yb)
 global Dp;
 
@@ -355,5 +344,20 @@ ya(13) - 0
 ya(14) - 0
 ya(15) - 0
 ya(16) - 0
-ya(17) - 0];
+yb(1) + 1
+yb(2) - 2
+yb(3) - 2.5
+yb(16) - 0
+yb(17) - 0
+yb(18) - 0
+yb(19) - 0
+yb(20) - 0
+yb(21) - 0
+yb(22) - 0
+yb(23) - 0
+yb(24) - 0
+yb(25) - 0
+yb(26) - 0
+yb(27) - 0
+yb(28) - 0];
 end
