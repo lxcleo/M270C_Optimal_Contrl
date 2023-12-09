@@ -26,9 +26,9 @@ q_d = [x_d y_d z_d psi_d theta_d phi_d  alpha_d beta_d]';
 zeta_d = [x_d y_d z_d]';
 neta_d = [psi_d theta_d phi_d]';
 miu_d = [alpha_d beta_d]';
-ml = 10; % Mass of the load
-M_quad = 4; % Mass of the quadrotor
-l = 0.8; % Length of the quadrotor 
+ml = 0.3; % Mass of the load
+M_quad = 0.56; % Mass of the quadrotor
+l = 0.242; % Length of the quadrotor 
 m11 = M_quad + ml;
 m22 = m11;
 m33 = m11;
@@ -210,9 +210,9 @@ q_d = [x_d y_d z_d psi_d theta_d phi_d  alpha_d beta_d]';
 zeta_d = [x_d y_d z_d]';
 neta_d = [psi_d theta_d phi_d]';
 miu_d = [alpha_d beta_d]';
-ml = 10; % Mass of the load
-M_quad = 4; % Mass of the quadrotor
-l = 0.8; % Length of the quadrotor 
+ml = 0.3; % Mass of the load
+M_quad = 0.56; % Mass of the quadrotor
+l = 0.242; % Length of the quadrotor 
 m11 = M_quad + ml;
 m22 = m11;
 m33 = m11;
@@ -226,9 +226,9 @@ m28 = ml * l * sin(alpha) * cos(beta);
 m82 = m28;
 m37 = ml * l * sin(alpha);
 m73 = m37;
-I_psi = 1;
-I_theta = 0.5;
-I_phi = 0.5;
+I_psi = 2.1e-3;
+I_theta = 6.78e-3;
+I_phi = 6.78e-3;
 
 m44 = I_psi * sin(theta)^2 + cos(theta)^2 * (I_theta * sin(theta)^2 ...
     + I_phi * cos(phi)^2);
@@ -286,7 +286,14 @@ b = [b11 0 0 0;...
     0 0 0 0;...
     0 0 0 0];
 global u_sol;
-u_ = eval(u_sol);
+u1 = eval(u_sol(1));
+u1 = saturate(u1,-3,12);
+u2 = eval(u_sol(2));
+u2 = saturate(u2,-6,6);
+u3 = eval(u_sol(3));
+u3 = saturate(u3,-6,6);
+u4 = eval(u_sol(4));
+u4 = saturate(u4,-6,6);
 U = b * u_;
 dydt(1) = xx(9);
 dydt(2) = xx(10);
@@ -299,6 +306,20 @@ dydt(8) = xx(16);
 dydt(9:16) = -inv(M) * (C * q_d + G) + inv(M) * U;
 global Dp;
 dydt(17:end) = eval(Dp);
+end
+function saturatedValue = saturate(u, lowerLimit, upperLimit)
+    % Saturation function to constrain the variable 'u' between 'lowerLimit' and 'upperLimit'
+    
+    % Check if 'u' is below the lower limit
+    if u < lowerLimit
+        saturatedValue = lowerLimit;
+    % Check if 'u' is above the upper limit
+    elseif u > upperLimit
+        saturatedValue = upperLimit;
+    % If 'u' is within the limits, no saturation needed
+    else
+        saturatedValue = u;
+    end
 end
 % function dydt = BVP_ode(t,y)
 % global R;
@@ -316,8 +337,23 @@ end
 % The boundary conditions:
 % x1(0) = 0.05, x2(0) = 0, tf = 0.78, p1(tf) = 0, p2(tf) = 0;
 function res = BVP_bc(ya,yb)
-res = [ ya(1) - 0.05
-ya(2) - 0
-yb(3) - 0
-yb(4) - 0 ];
+global Dp;
+
+res = [ ya(1) - 1.5
+ya(2) + 2
+ya(3) - 2
+ya(4) - 0
+ya(5) - 0
+ya(6) - 0
+ya(7) - 0
+ya(8) - 0
+ya(9) - 0
+ya(10) - 0
+ya(11) - 0
+ya(12) - 0
+ya(13) - 0
+ya(14) - 0
+ya(15) - 0
+ya(16) - 0
+ya(17) - 0];
 end
