@@ -16,7 +16,7 @@ ut*ut'*0.1)/n;
 clear all
 syms x y z psi theta phi alpha beta ...
     x_d y_d z_d psi_d theta_d phi_d alpha_d beta_d ...
-    p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 ...
+    p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 ... 
     p12 p13 p14 p15 p16 u1 u2 u3 u4 real;
 q = [x y z psi theta phi alpha beta]'; 
 zeta = [x y z]';
@@ -51,8 +51,9 @@ m44 = I_psi * sin(theta)^2 + cos(theta)^2 * (I_theta * sin(theta)^2 ...
 m45 = (I_theta - I_phi)* (cos(theta) * sin(phi) * cos(phi));
 m54 = m45;
 m55 = I_theta * cos(phi)^2 + I_phi * sin(phi)^2;
-m77 = ml * l^2;
-m88 = ml * l^2 * sin(alpha)^2;
+I = 2/5 * ml * 0.2^2;
+m77 = ml * l^2 + I;
+m88 = ml * l^2 * sin(alpha)^2 + I;
 M = [m11 0 0 0 0 0 m17 m18; ...
     0 m22 0 0 0 0 m27 m28; ...
     0 0 m33 0 0 0 m37 0; ...
@@ -169,11 +170,11 @@ t0 = 0;
 tf = 20;
 init_guess = [1.5 -2 2 0 0 0 0 0 zeros(1,8), ones(1,16)];
 solinit = bvpinit(linspace(t0,tf,100),zeros(1,32));
-options = bvpset('Stats','on','RelTol',1e-1)
+options = bvpset('Stats','on','RelTol',1e-1);
 sol = bvp4c(@(t,y) pd(t,y,u_sol,Dp), @BVP_bc,solinit);
 function dydt = pd(t,xx,u_sol,Dp)
 dydt = zeros(32,1);
-x = xx(1);
+x = xx(1);  
 y = xx(2);
 z = xx(3);
 psi = xx(4);
@@ -238,8 +239,9 @@ m44 = I_psi * sin(theta)^2 + cos(theta)^2 * (I_theta * sin(theta)^2 ...
 m45 = (I_theta - I_phi)* (cos(theta) * sin(phi) * cos(phi));
 m54 = m45;
 m55 = I_theta * cos(phi)^2 + I_phi * sin(phi)^2;
-m77 = ml * l^2;
-m88 = ml * l^2 * sin(alpha)^2;
+I = 2/5 * ml * 0.2^2;
+m77 = ml * l^2 + I;
+m88 = ml * l^2 * sin(alpha)^2 + I;
 M = [m11 0 0 0 0 0 m17 m18; ...
     0 m22 0 0 0 0 m27 m28; ...
     0 0 m33 0 0 0 m37 0; ...
