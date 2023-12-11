@@ -146,15 +146,28 @@ dHdu1 = diff(H,u1);
 dHdu2 = diff(H,u2);
 dHdu3 = diff(H,u3);
 dHdu4 = diff(H,u4);
+%%
+T_start = 0;    % Start time
+T_end = 10;     % End time
+N = 100;        % Number of time points
+
+% Create a vector of time points (Tu)
+Tu = linspace(T_start, T_end, N);
+
+% Define the control input vector (u) at these time points
+% Example: A sine wave control input
+u = sin(2*pi*Tu/10); 
+t = 4;
+u_t = interp1(Tu, u, t)
 %% 
-u_sol = [8.5 0 0 0]'; % Initial Guess for control input 
 t0 = 0;
 tf = 10;
-tspan = linspace(t0, tf, 10);
+N = 50;
+tspan = linspace(t0, tf, N);
 init_guess = [1.5 -2 2 0 0 0 0 0 zeros(1,8)];
-sol = ode45(@(t,y) stateEqn(t,y,u_sol), tspan, init_guess);
-%%
-plot(sol.y(3,:))
+u_sol = [5 0 0 0]'; % Initial Guess for control input 
+[Tx, X] = ode45(@(t,y) stateEqn(t,y,u_sol), tspan, init_guess);
+% [Tp, P] = ode45(@(t, p) costateEqn(t,p,u_sol,))
 %%
 %Optimization Loop
 max_iter = 15;
