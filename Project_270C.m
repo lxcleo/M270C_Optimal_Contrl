@@ -26,7 +26,7 @@ q_d = [x_d y_d z_d psi_d theta_d phi_d  alpha_d beta_d]';
 zeta_d = [x_d y_d z_d]';
 neta_d = [psi_d theta_d phi_d]';
 miu_d = [alpha_d beta_d]';
-ml = 0.3; % Mass of the load
+ml = 0.1; % Mass of the load
 M_quad = 0.56; % Mass of the quadrotor
 l = 0.242; % Length of the quadrotor 
 m11 = M_quad + ml;
@@ -112,7 +112,8 @@ P = [p1 p2 p3 p4 p5 p6 p7 p8 ...
     p9 p10 p11 p12 p13 p14 p15 p16]';
 syms J real;
 Q = eye(8);
-J = 1/2 * q' * Q * q + 1/2 * q_d' * Q * q_d + 1/2 * U' * Q * U;
+% J = 1/2 * q' * Q * q + 1/2 * q_d' * Q * q_d + 1/2 * U' * Q * U;
+J = 1/2 * U' * Q * U;
 syms H real;
 H = (J + P' * dydt);
 du1 = diff(H,u1);
@@ -168,10 +169,49 @@ Dp = [Dp1 Dp2 Dp3 Dp4 Dp5 Dp6 Dp7 ...
 %% 
 t0 = 0;
 tf = 5;
-init_guess = [1.5 -2 2 0 0 0 0 0 zeros(1,8), ones(1,16)];
+init_guess = [1.5 -2 2 zeros(1,13), ones(1,16)];
 solinit = bvpinit(linspace(t0,tf,10),init_guess);
 options = bvpset('Stats','on','RelTol',1e-1);
 sol = bvp4c(@(t,y) pd(t,y,u_sol,Dp), @BVP_bc,solinit,options);
+%%
+x = sol.y(1,:);  
+y = sol.y(2,:);
+z = sol.y(3,:);
+psi = sol.y(4,:);
+theta = sol.y(5,:);
+phi = sol.y(6,:);
+alpha = sol.y(7,:);
+beta = sol.y(8,:);
+x_d = sol.y(9,:);
+y_d = sol.y(10,:);
+z_d = sol.y(11,:);
+psi_d = sol.y(12,:);
+theta_d = sol.y(13,:);
+phi_d = sol.y(14,:);
+alpha_d = sol.y(15,:);
+beta_d = sol.y(16,:);
+p1 = sol.y(17,:);
+p2 = sol.y(18,:);
+p3 = sol.y(19,:);
+p4 = sol.y(20,:);
+p5 = sol.y(21,:);
+p6 = sol.y(22,:);
+p7 = sol.y(23,:);
+p8 = sol.y(24,:);
+p9 = sol.y(25,:);
+p10 = sol.y(26,:);
+p11 = sol.y(27,:);
+p12 = sol.y(28,:);
+p13 = sol.y(29,:);
+p14 = sol.y(30,:);
+p15 = sol.y(31,:);
+p16 = sol.y(32,:);
+u1 = eval(sol_u1);
+u2 = eval(sol_u2);
+u3 = eval(sol_u3);
+u4 = eval(sol_u4);
+
+
 function dydt = pd(t,xx,u_sol,Dp)
 dydt = zeros(32,1);
 x = xx(1);  
@@ -214,7 +254,7 @@ q_d = [x_d y_d z_d psi_d theta_d phi_d  alpha_d beta_d]';
 zeta_d = [x_d y_d z_d]';
 neta_d = [psi_d theta_d phi_d]';
 miu_d = [alpha_d beta_d]';
-ml = 0.3; % Mass of the load
+ml = 0.1; % Mass of the load
 M_quad = 0.56; % Mass of the quadrotor
 l = 0.242; % Length of the quadrotor 
 m11 = M_quad + ml;
@@ -300,7 +340,7 @@ u3 = saturate(u3,-6,6);
 u4 = eval(u_sol(4));
 u4 = saturate(u4,-6,6);
 % u_ = [u1 u2 u3 u4]';
-u_ = [1 0 0 0]';
+u_ = [1 0 1 0]';
 U = b * u_;
 dydt(1) = xx(9);
 dydt(2) = xx(10);
@@ -326,11 +366,9 @@ function saturatedValue = saturate(u, lowerLimit, upperLimit)
     else
         saturatedValue = u;
     end
-end
+end 
 
 function res = BVP_bc(ya,yb)
-global Dp;
-
 res = [ ya(1) - 1.5
 ya(2) + 2
 ya(3) - 2
@@ -347,20 +385,36 @@ ya(13) - 0
 ya(14) - 0
 ya(15) - 0
 ya(16) - 0
-yb(17) - 0
-yb(18) - 0
-yb(19) - 0
-yb(20) - 0
-yb(21) - 0
-yb(22) - 0
-yb(23) - 0
-yb(24) - 0
-yb(25) - 0
-yb(26) - 0
-yb(27) - 0
-yb(28) - 0
-yb(29) - 0
-yb(30) - 0
-yb(31) - 0
-yb(32) - 0];
+yb(1) + 1
+yb(2) - 2
+yb(3) - 2.5
+yb(4) - 0
+yb(5) - 0
+yb(6) - 0
+yb(7) - 0
+yb(8) - 0
+yb(9) - 0
+yb(10) - 0
+yb(11) - 0
+yb(12) - 0
+ya(13) - 0
+ya(14) - 0
+yb(15) - 0
+yb(16) - 0];
+% ya(17) - 0
+% ya(18) - 0
+% ya(19) - 0
+% ya(20) - 0
+% ya(21) - 0
+% ya(22) - 0
+% ya(23) - 0
+% ya(24) - 0
+% ya(25) - 0
+% ya(26) - 0
+% ya(27) - 0
+% ya(28) - 0
+% ya(29) - 0
+% ya(30) - 0
+% ya(31) - 0
+% ya(32) - 0];
 end
