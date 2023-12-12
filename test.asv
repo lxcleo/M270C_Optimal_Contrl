@@ -1,0 +1,20 @@
+x_data = csvread("x_data.csv");
+y_data = csvread("y_data.csv");
+z_data = csvread("z_data.csv");
+xx = x_data(:,1);
+xy = x_data(:,2);
+yx = y_data(:,1);
+yy = y_data(:,2);
+zx = z_data(:,1);
+zy = z_data(:,2);
+figure(1);
+plot(xx,xy,'-.r',yx,yy,'b*',zx,zy,'g:','LineWidth',3)
+grid on;
+xlabel('Time(s)');
+ylabel('Position(m)');
+title('Optimal trajectory for X Y and Z')
+legend('X-position','Y-position','Z-position','Location','southeast')
+%%
+xy = csvread("xy_traj.csv");
+x_traj = xy(:,1);
+y_traj = xy(:,2);
